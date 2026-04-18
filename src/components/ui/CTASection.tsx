@@ -1,9 +1,42 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { MoveRight } from "lucide-react";
 
 export function CTASection() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setStatus("loading");
+
+    const callbackName = "jsonp_callback_" + Math.round(100000 * Math.random());
+    const url = `https://gmail.us8.list-manage.com/subscribe/post-json?u=4aa947ff0111cc91bb44e1ae9&id=e3608104c1&f_id=007eb6e3f0&EMAIL=${encodeURIComponent(email)}&c=${callbackName}`;
+
+    (window as any)[callbackName] = (data: any) => {
+      delete (window as any)[callbackName];
+      const script = document.getElementById(callbackName);
+      if (script) script.remove();
+
+      if (data.result === "success") {
+        setStatus("success");
+        setMessage("Priority access secured. We'll be in touch.");
+      } else {
+        setStatus("error");
+        setMessage(data.msg?.toString().replace(/^\d+\s-\s/, "") || "An error occurred.");
+      }
+    };
+
+    const script = document.createElement("script");
+    script.src = url;
+    script.id = callbackName;
+    document.body.appendChild(script);
+  };
   return (
     <section className="py-40 px-6 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none opacity-[0.02]">
@@ -43,17 +76,41 @@ export function CTASection() {
           transition={{ delay: 0.2 }}
           className="relative z-10 max-w-md mx-auto"
         >
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <input 
-              type="email" 
-              placeholder="Enter your email" 
-              className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-full text-slate-100 placeholder-slate-400 outline-none focus:border-[#cfae60] focus:ring-1 focus:ring-[#cfae60]/50 transition-all font-sans"
-            />
-            <button className="group/btn relative inline-flex items-center justify-center px-8 py-4 font-bold text-black bg-gradient-to-r from-[#cfae60] to-[#ecdbb0] rounded-full hover:scale-105 transition-all duration-300 shadow-[0_0_30px_rgba(207,174,96,0.3)] hover:shadow-[0_0_50px_rgba(207,174,96,0.5)] shrink-0">
-              <span className="mr-2">Join Waitlist</span>
-              <MoveRight strokeWidth={2} className="w-5 h-5 group-hover/btn:translate-x-1.5 transition-transform" />
-            </button>
-          </div>
+          {status === "success" ? (
+             <div className="px-8 py-4 bg-white/5 border border-theme-gold/30 rounded-full text-theme-gold-light font-medium tracking-wide shadow-[0_0_20px_rgba(207,174,96,0.1)] mb-8">
+               {message}
+             </div>
+          ) : (
+            <div className="w-full">
+              <form 
+                onSubmit={handleSubmit}
+                className="flex flex-col sm:flex-row gap-3 w-full relative"
+              >
+                <div className="relative w-full">
+                  <input 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="Enter your email" 
+                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-full text-slate-100 placeholder-slate-400 outline-none focus:border-[#cfae60] focus:ring-1 focus:ring-[#cfae60]/50 transition-all font-sans disabled:opacity-50"
+                    disabled={status === "loading"}
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={status === "loading"}
+                  className="group/btn relative inline-flex items-center justify-center px-8 py-4 font-bold text-black bg-gradient-to-r from-[#cfae60] to-[#ecdbb0] rounded-full hover:scale-105 transition-all duration-300 shadow-[0_0_30px_rgba(207,174,96,0.3)] hover:shadow-[0_0_50px_rgba(207,174,96,0.5)] shrink-0 disabled:opacity-70 disabled:hover:scale-100"
+                >
+                  <span className="mr-2">{status === "loading" ? "Joining..." : "Join Waitlist"}</span>
+                  <MoveRight strokeWidth={2} className="w-5 h-5 group-hover/btn:translate-x-1.5 transition-transform" />
+                </button>
+              </form>
+              {status === "error" && (
+                <div className="mt-3 text-red-400 text-sm font-sans px-4 text-center" dangerouslySetInnerHTML={{ __html: message }} />
+              )}
+            </div>
+          )}
           <p className="mt-8 text-xs text-[#cfae60]/60 font-sans tracking-widest uppercase font-bold">Priority Spots Limited • Phase 1 Beta</p>
         </motion.div>
       </div>
