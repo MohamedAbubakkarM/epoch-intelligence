@@ -1,42 +1,11 @@
 "use client";
-
-import { useState } from "react";
+ 
 import { motion } from "framer-motion";
 import { ArrowRight, Globe } from "lucide-react";
-
+import { useSubscribe } from "@/hooks/useSubscribe";
+ 
 export function HeroSection() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [message, setMessage] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setStatus("loading");
-
-    const callbackName = "jsonp_callback_" + Math.round(100000 * Math.random());
-    const url = `https://gmail.us8.list-manage.com/subscribe/post-json?u=4aa947ff0111cc91bb44e1ae9&id=e3608104c1&f_id=007eb6e3f0&EMAIL=${encodeURIComponent(email)}&c=${callbackName}`;
-
-    (window as any)[callbackName] = (data: any) => {
-      delete (window as any)[callbackName];
-      const script = document.getElementById(callbackName);
-      if (script) script.remove();
-
-      if (data.result === "success") {
-        setStatus("success");
-        setMessage("Thank you for subscribing! You are now in the waitlist with the other 499 members");
-      } else {
-        setStatus("error");
-        setMessage(data.msg?.toString().replace(/^\d+\s-\s/, "") || "An error occurred.");
-      }
-    };
-
-    const script = document.createElement("script");
-    script.src = url;
-    script.id = callbackName;
-    document.body.appendChild(script);
-  };
+  const { email, setEmail, status, message, handleSubmit } = useSubscribe();
   return (
     <section className="relative w-full min-h-[90vh] flex flex-col justify-center items-center overflow-hidden px-6 pt-32 pb-20">
       <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
